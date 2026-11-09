@@ -168,19 +168,25 @@ The `-s` flag makes `http-server` serve `index.html` for unknown paths, so Angul
 
 ## 5. Add npm scripts
 
-In `package.json`, add these scripts (or replace the existing `test` script):
+In `package.json`, keep the existing `test` script for Angular's unit tests, and add `e2e` scripts for Playwright:
 
 ```json
 "scripts": {
-  "test": "playwright test",
-  "test:ui": "playwright test --ui",
-  "test:headed": "playwright test --headed",
-  "test:debug": "playwright test --debug",
-  "test:report": "playwright show-report"
+  "test": "ng test",
+  "e2e": "playwright test",
+  "e2e:ui": "playwright test --ui",
+  "e2e:headed": "playwright test --headed",
+  "e2e:debug": "playwright test --debug",
+  "e2e:report": "playwright show-report"
 }
 ```
 
-> If you want to keep Angular's unit tests under `npm test`, name these scripts `e2e`, `e2e:ui` and so on instead.
+- `npm test` runs the unit tests (Vitest, or Karma in older projects).
+- `npm run e2e` runs the Playwright tests.
+
+The two runners don't pick up each other's files: Angular's unit-test runner only looks under `src/`, and Playwright only looks in `testDir` (`e2e/`). Keep E2E specs out of `src/`.
+
+> **Optional: `ng e2e`.** The community package [`playwright-ng-schematics`](https://github.com/playwright-community/playwright-ng-schematics) (`ng add playwright-ng-schematics`) adds an `e2e` entry to `angular.json`, so `ng e2e` runs Playwright. Plain npm scripts work just as well and need no extra package.
 
 ## 6. Ignore generated output
 
@@ -332,11 +338,11 @@ Key points:
 
 | Command | What it does |
 |---|---|
-| `npm test` | Runs all tests in all browsers, without visible windows. |
-| `npm run test:ui` | Opens Playwright's interactive UI: pick tests, watch them run, inspect each step. |
-| `npm run test:headed` | Runs the tests with visible browser windows. |
-| `npm run test:debug` | Opens the Playwright Inspector and pauses at the first action, so you can step through. |
-| `npm run test:report` | Opens the HTML report from the last run. |
+| `npm run e2e` | Runs all E2E tests in all browsers, without visible windows. |
+| `npm run e2e:ui` | Opens Playwright's interactive UI: pick tests, watch them run, inspect each step. |
+| `npm run e2e:headed` | Runs the tests with visible browser windows. |
+| `npm run e2e:debug` | Opens the Playwright Inspector and pauses at the first action, so you can step through. |
+| `npm run e2e:report` | Opens the HTML report from the last run. |
 | `npx playwright test --project=chromium` | Runs the tests in one browser only. |
 | `npx playwright test e2e/search.spec.ts` | Runs a single file. |
 | `npx playwright test -g "clear button"` | Runs the tests whose title matches the text. |
@@ -346,8 +352,8 @@ To run a single test while you're working on it, temporarily change `test(` to `
 
 ## 11. Debugging and reports
 
-- **UI mode** (`npm run test:ui`): the best day-to-day tool. It shows a timeline of each action with a page snapshot, console logs and network calls, and can re-run tests when you save (the eye icon).
-- **HTML report** (`npm run test:report`): lists every test with its duration, error, screenshot and trace. It is written to `playwright-report/`.
+- **UI mode** (`npm run e2e:ui`): the best day-to-day tool. It shows a timeline of each action with a page snapshot, console logs and network calls, and can re-run tests when you save (the eye icon).
+- **HTML report** (`npm run e2e:report`): lists every test with its duration, error, screenshot and trace. It is written to `playwright-report/`.
 - **Trace viewer:** traces are recorded when a failed test is retried (`trace: 'on-first-retry'`). Open one from the HTML report, or run `npx playwright show-trace path/to/trace.zip`. To record a trace on every run while debugging, use `npx playwright test --trace on`.
 - **Codegen:** `npx playwright codegen http://localhost:4200` opens a browser that records your clicks and typing as test code. It's a quick way to find good locators.
 - **VS Code:** install the **Playwright Test for VSCode** extension (`ms-playwright.playwright`). It adds run and debug buttons next to each test, lets you set breakpoints in tests, and has a "Pick locator" tool.
@@ -426,6 +432,7 @@ npm uninstall karma karma-chrome-launcher karma-coverage karma-jasmine karma-jas
 Then:
 
 1. In `angular.json`, delete the `"test"` entry under `projects.<app>.architect`.
+1. In `package.json`, delete the `"test": "ng test"` script, which would now fail, or point it at Playwright (`"test": "playwright test"`).
 2. Delete `tsconfig.spec.json`, and remove its entry from the `references` list in `tsconfig.json` if it has one.
 3. Delete the `src/**/*.spec.ts` files (and `karma.conf.js` if there is one).
 
@@ -474,7 +481,7 @@ Small suites (like this repository) can keep page objects directly in `e2e/`.
 | `strict mode violation: ... resolved to N elements` | The locator matches several elements. Make it more specific, or use `.first()`, `.nth(i)` or `.filter({ hasText: '...' })`. |
 | Browser download fails behind a corporate proxy | Set `HTTPS_PROXY`, or point `PLAYWRIGHT_DOWNLOAD_HOST` to an internal mirror, then run `npx playwright install` again. |
 | Linux: `Host system is missing dependencies` | Run `npx playwright install --with-deps`, or use the official Docker image. |
-| The UI window closes immediately | Run `npm run test:ui` from your own terminal (not a background process). It stays open until you close the window. |
+| The UI window closes immediately | Run `npm run e2e:ui` from your own terminal (not a background process). It stays open until you close the window. |
 
 ## 16. Reference: this repository
 
@@ -493,7 +500,7 @@ To try it:
 ```bash
 npm install
 npx playwright install chromium firefox webkit
-npm test              # 21 tests: 7 tests × 3 browsers
+npm run e2e           # 21 tests: 7 tests × 3 browsers
 npm start             # app at http://localhost:4200
 ```
 
