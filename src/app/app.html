@@ -1,0 +1,35 @@
+<main class="container">
+  <h1>Items</h1>
+
+  <div class="search">
+    <input
+      type="search"
+      placeholder="Search by name or category..."
+      aria-label="Search items"
+      data-testid="search-input"
+      [value]="query()"
+      (input)="onSearch($event)"
+    />
+    @if (query()) {
+      <button type="button" data-testid="clear-button" (click)="clear()">Clear</button>
+    }
+  </div>
+
+  <p class="count" data-testid="result-count">
+    Showing {{ filteredItems().length }} of {{ items().length }} items
+  </p>
+
+  @if (filteredItems().length) {
+    <ul class="item-list" data-testid="item-list">
+      @for (item of filteredItems(); track item.id) {
+        <li class="item" data-testid="item">
+          <span class="name">{{ item.name }}</span>
+          <span class="category">{{ item.category }}</span>
+          <span class="price">{{ item.price.toFixed(2) }}</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="empty" data-testid="no-results">No items match "{{ query() }}".</p>
+  }
+</main>
